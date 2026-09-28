@@ -66,15 +66,17 @@ export async function addUserQuest({ text, category, userId }) {
 }
 
 export async function spinForQuest() {
-  // Decide whether to pull from the (global) unique pool
+  // Decide whether to pull from the (global) unique pool. Inactive quests
+  // are excluded here — deactivating a quest hides it from spins without
+  // deleting it.
   const { rows: uniqueRows } = await pool.query(
-    `SELECT COUNT(*)::int AS count FROM quests WHERE rarity = 'unique'`
+    `SELECT COUNT(*)::int AS count FROM quests WHERE rarity = 'unique' AND is_active = TRUE`
   );
   const hasUnique = uniqueRows[0].count > 0;
 
   if (hasUnique && Math.random() < UNIQUE_PULL_CHANCE) {
     const { rows } = await pool.query(
-      `SELECT * FROM quests WHERE rarity = 'unique' ORDER BY RANDOM() LIMIT 1`
+      `SELECT * FROM quests WHERE rarity = 'unique' AND is_active = TRUE ORDER BY RANDOM() LIMIT 1`
     );
     return rows[0];
   }
@@ -83,7 +85,7 @@ export async function spinForQuest() {
   const { rows: counts } = await pool.query(
     `SELECT rarity, COUNT(*)::int AS count
      FROM quests
-     WHERE is_preset = TRUE
+     WHERE is_preset = TRUE AND is_active = TRUE
      GROUP BY rarity`
   );
 
@@ -91,7 +93,7 @@ export async function spinForQuest() {
   if (!chosenRarity) return null;
 
   const { rows } = await pool.query(
-    `SELECT * FROM quests WHERE is_preset = TRUE AND rarity = $1
+    `SELECT * FROM quests WHERE is_preset = TRUE AND is_active = TRUE AND rarity = $1
      ORDER BY RANDOM() LIMIT 1`,
     [chosenRarity]
   );
@@ -134,6 +136,16 @@ export async function deleteUserQuest(id) {
     [id]
   );
   return rowCount > 0;
+}
+
+// Toggles a quest's active state — an inactive quest is skipped by spins
+// but stays in the database, unlike delete which removes it permanently.
+export async function toggleQuestActive(id) {
+  const { rows } = await pool.query(
+    `UPDATE quests SET is_active = NOT is_active WHERE id = $1 AND is_preset = FALSE RETURNING *`,
+    [id]
+  );
+  return rows[0];
 }
 
 // Clears the completion log AND resets every quest's completion state, so
