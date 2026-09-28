@@ -13,7 +13,7 @@ import {
   deleteUserQuest,
   resetHistory,
   toggleQuestActive,
-} from './questsRepo.js';
+} from './questsrepo.js';
 import pool from './db/pool.js';
 import { generateQuestIdea } from './aiService.js';
 
