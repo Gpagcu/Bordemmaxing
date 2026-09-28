@@ -36,6 +36,18 @@ export async function generateQuestIdea() {
         // leave the actual output empty. This task is simple enough not to
         // need that, so it's turned off.
         thinkingConfig: { thinkingBudget: 0 },
+        // Ask the API itself to guarantee valid JSON in this exact shape,
+        // rather than hoping the model obeys the prompt. Prompt-only JSON
+        // occasionally comes back wrapped in extra words or cut off.
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            text: { type: 'STRING' },
+            category: { type: 'STRING' },
+          },
+          required: ['text', 'category'],
+        },
       },
     }),
   });
@@ -55,14 +67,17 @@ export async function generateQuestIdea() {
     throw new Error('Gemini API returned an empty response');
   }
 
-  // The model is asked for raw JSON, but strip code fences defensively in
-  // case it wraps the response in ```json anyway.
+  // Belt and braces: even with a forced JSON response, strip code fences and
+  // pull out just the {...} object in case anything extra surrounds it.
   const cleaned = raw.replace(/```json|```/g, '').trim();
+  const match = cleaned.match(/\{[\s\S]*\}/);
 
   let parsed;
   try {
-    parsed = JSON.parse(cleaned);
+    parsed = JSON.parse(match ? match[0] : cleaned);
   } catch {
+    // Log exactly what came back so a failure is diagnosable, not a mystery.
+    console.error('Gemini returned unparseable JSON. Raw text was:', raw);
     throw new Error('Gemini API returned unparseable JSON');
   }
 
