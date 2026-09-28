@@ -12,7 +12,8 @@ import {
   getHistory,
   deleteUserQuest,
   resetHistory,
-} from './questsrepo.js';
+  toggleQuestActive,
+} from './questsRepo.js';
 import pool from './db/pool.js';
 import { generateQuestIdea } from './aiService.js';
 
@@ -45,16 +46,6 @@ function getUserId(req) {
 
 // Purely cosmetic — so a visitor (or grader) opening the bare API URL sees
 // something informative instead of Express's default "Cannot GET /".
-// TEMPORARY — remove once CORS is confirmed working. Shows exactly what
-// this running process actually sees for CORS_ORIGINS, to rule out
-// dashboard copy/paste or formatting issues.
-app.get('/debug/cors', (req, res) => {
-  res.json({
-    raw: process.env.CORS_ORIGINS || null,
-    parsed: allowedOrigins,
-  });
-});
-
 app.get('/', (req, res) => {
   res.json({
     name: 'Bordemmaxing API',
@@ -144,6 +135,18 @@ app.delete('/api/quests/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete quest' });
+  }
+});
+
+// Toggles active/inactive — hides a quest from spins without deleting it.
+app.patch('/api/quests/:id/toggle-active', async (req, res) => {
+  try {
+    const quest = await toggleQuestActive(req.params.id);
+    if (!quest) return res.status(404).json({ error: 'Quest not found, or it is a preset' });
+    res.json(quest);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update quest' });
   }
 });
 
