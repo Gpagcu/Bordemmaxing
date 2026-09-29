@@ -253,13 +253,23 @@ footer {
   color: var(--muted);
 }
 
-.card.inactive {
-  opacity: 0.55;
+/* Hidden quests collapse their category line rather than just dimming —
+   the text, badge, and both action buttons stay fully visible and usable. */
+.quest-details {
+  max-height: 60px;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-height 0.3s ease, opacity 0.25s ease, margin 0.3s ease;
 }
 
-.card.inactive .quest-text {
-  text-decoration: line-through;
-  text-decoration-color: var(--muted);
+.card.collapsed .quest-details {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+}
+
+.card.collapsed {
+  padding-bottom: 0.9rem;
 }
 
 /* --- rarity badges: the core information system --- */
@@ -475,6 +485,10 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .gacha-wheel {
     transition: none !important;
+  }
+
+  .quest-details {
+    transition: none;
   }
 }
 

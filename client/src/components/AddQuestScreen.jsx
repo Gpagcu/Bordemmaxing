@@ -167,14 +167,16 @@ export default function AddQuestScreen() {
       {status === 'ready' && rows.length > 0 && (
         <ul className="list">
           {rows.map((row) => (
-            <li key={row.id} className={row.is_active ? 'card' : 'card inactive'}>
+            <li key={row.id} className={row.is_active ? 'card' : 'card collapsed'}>
               <div className="row-head">
                 <p className="quest-text">{row.text}</p>
                 <span className="rarity-badge rarity-unique">
                   {row.is_active ? 'unique' : 'unique · hidden'}
                 </span>
               </div>
-              {row.category && <p className="muted">Category: {row.category}</p>}
+              <div className="quest-details">
+                {row.category && <p className="muted">Category: {row.category}</p>}
+              </div>
               <footer>
                 <button onClick={() => handleToggleActive(row.id)} className="secondary">
                   {row.is_active ? 'Hide from spins' : 'Unhide'}
