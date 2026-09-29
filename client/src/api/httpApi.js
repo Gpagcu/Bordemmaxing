@@ -54,6 +54,9 @@ export const completeQuest = (id) =>
 export const deleteQuest = (id) =>
   request(`/api/quests/${id}`, { method: 'DELETE' })
 
+export const toggleQuestActive = (id) =>
+  request(`/api/quests/${id}/toggle-active`, { method: 'PATCH' })
+
 export const listHistory = () => request('/api/history')
 
 export const resetHistory = () => request('/api/history', { method: 'DELETE' })

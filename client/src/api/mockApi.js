@@ -99,7 +99,7 @@ export async function listQuests({ rarity, category } = {}) {
 
 export async function spinQuest() {
   await delay()
-  const rows = readQuests()
+  const rows = readQuests().filter((row) => row.is_active !== false)
 
   const uniqueRows = rows.filter((row) => row.rarity === 'unique')
   if (uniqueRows.length > 0 && Math.random() < UNIQUE_PULL_CHANCE) {
@@ -128,12 +128,24 @@ export async function createQuest(input) {
     rarity: 'unique',
     is_preset: false,
     user_id: 'local',
+    is_active: true,
     is_completed: false,
     date_completed: null,
     created_at: new Date().toISOString(),
   }
   writeQuests([...readQuests(), created])
   return created
+}
+
+export async function toggleQuestActive(id) {
+  await delay()
+  const rows = readQuests()
+  const index = rows.findIndex((row) => String(row.id) === String(id) && !row.is_preset)
+  if (index === -1) throw new Error('Not found')
+
+  rows[index] = { ...rows[index], is_active: !rows[index].is_active }
+  writeQuests(rows)
+  return rows[index]
 }
 
 export async function completeQuest(id) {
