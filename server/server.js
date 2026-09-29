@@ -1,8 +1,10 @@
 // server/server.js
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import {
   getAllQuests,
@@ -30,6 +32,50 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
 
 app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : true }));
 app.use(express.json());
+
+// Render sits behind a proxy, so without this every request looks like it
+// comes from the same IP and rate limiting would throttle everyone together.
+app.set('trust proxy', 1);
+
+// Access gate. The public site lives behind Cloudflare Access; the Cloudflare
+// Worker forwards API calls here with a shared secret header. Anything without
+// it (someone hitting the raw Render URL directly) is rejected, so the login
+// wall can't be bypassed by skipping Cloudflare.
+const PROXY_SECRET = process.env.PROXY_SECRET;
+if (process.env.NODE_ENV === 'production' && !PROXY_SECRET) {
+  // Fail closed: better a loud crash than a silently open API.
+  console.error('PROXY_SECRET is not set. Refusing to start in production without it.');
+  process.exit(1);
+}
+app.use((req, res, next) => {
+  if (!PROXY_SECRET) return next(); // local development: no gate
+  const sent = Buffer.from(String(req.headers['x-proxy-secret'] || ''));
+  const expected = Buffer.from(PROXY_SECRET);
+  const ok = sent.length === expected.length && crypto.timingSafeEqual(sent, expected);
+  if (!ok) return res.status(403).json({ error: 'Forbidden' });
+  next();
+});
+
+// The AI endpoint calls a metered external API, so it gets a tight limit:
+// 5 requests per minute per IP.
+const generateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many AI requests. Please wait a minute and try again.' },
+});
+
+// A looser limit across the whole API, mainly to blunt scripted abuse:
+// 120 requests per minute per IP.
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please slow down.' },
+});
+app.use('/api', apiLimiter);
 
 // Do NOT set PORT in .env — the host sets it in production. This fallback is for local dev only.
 const PORT = process.env.PORT || 4000;
@@ -92,7 +138,7 @@ app.get('/api/quests/spin', async (req, res) => {
 // Suggests a quest via Gemini. This only generates a suggestion — it does
 // NOT save anything. The user still reviews/edits it and hits the normal
 // "Add quest" button (POST /api/quests) to actually create it.
-app.post('/api/quests/generate', async (req, res) => {
+app.post('/api/quests/generate', generateLimiter, async (req, res) => {
   try {
     const idea = await generateQuestIdea();
     res.json(idea);
