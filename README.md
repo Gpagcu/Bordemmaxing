@@ -1,12 +1,10 @@
 # Bordemmaxing
 
 **Repository:** https://github.com/Gpagcu/Bordemmaxing
-**Live site:** https://gpagcu.github.io/Bordemmaxing/
-**API:** https://bordemmaxing.onrender.com/healthz
-
-> Note: Render's free tier spins down after inactivity. The first request
-> after idle time can take up to ~50 seconds to respond while it wakes up —
-> this is expected, not a bug.
+**Live site:** https://bordemmaxing.spinproject.workers.dev
+**Access:** Gated by Cloudflare Access (email One-Time PIN). Enter an
+approved email, you'll receive a short code, and the app loads once it's
+verified. Ask to be added to the policy if your email isn't accepted.
 
 ## 1. Overview
 
@@ -28,6 +26,8 @@ rut.
 - `npm` (comes with Node.js)
 - A free [Gemini API key](https://aistudio.google.com/apikey), if you want
   the AI-generate feature to work locally
+- A [Cloudflare account](https://dash.cloudflare.com) (free), if you want to
+  redeploy the Worker/Access layer rather than just run the app locally
 
 **1. Clone the repo:**
 ```bash
@@ -37,10 +37,9 @@ cd Bordemmaxing
 
 **2. Install dependencies:**
 ```bash
-cd server
-npm install
-cd ../client
-npm install
+cd server && npm install
+cd ../client && npm install
+cd ../worker && npm install
 cd ..
 ```
 
@@ -56,91 +55,111 @@ Variables needed in `server/.env`:
 
 | Variable | Example | Notes |
 |---|---|---|
-| `DATABASE_URL` | `postgresql://user:pass@host/dbname?sslmode=require` | Your Postgres connection string (local or hosted) |
+| `DATABASE_URL` | `postgresql://user:pass@host/dbname?sslmode=require` | Your Postgres connection string |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed origins, no trailing slash, no path |
 | `NODE_ENV` | `development` | Set to `production` on a deployed host |
-| `GEMINI_API_KEY` | `your-gemini-api-key-here` | Needed for the "Generate & add with AI" button; the app works fine without it, that button just won't |
+| `GEMINI_API_KEY` | `your-gemini-api-key-here` | Needed for the "Generate & add with AI" button |
+| `PROXY_SECRET` | _(leave unset locally)_ | Only required in production — see "Access control" below. Locally, the server skips this check entirely |
 | `PORT` | _(leave unset locally)_ | The host sets this in production; defaults to `4000` locally |
 
 Variables needed in `client/.env`:
 
 | Variable | Example | Notes |
 |---|---|---|
-| `VITE_USE_MOCK_API` | `false` | Only the exact string `false` turns off demo mode; unset means the app runs on a simulated in-browser backend |
-| `VITE_API_BASE_URL` | `http://localhost:4000` | The Express API's URL, no trailing slash |
+| `VITE_USE_MOCK_API` | `false` | Only the exact string `false` turns off demo mode |
+| `VITE_API_BASE_URL` | `http://localhost:4000` | For local dev. Leave **empty** when building for the Worker — see "How to run it" |
 
 **Never commit real credentials.** `.env` files are git-ignored; only the
 `.env.example` files (with placeholders) are committed.
 
 **4. Set up and seed the database**
-
-Run the schema, then the seed data, against your Postgres instance (via
-`psql`, or a hosted provider's SQL editor):
 ```bash
 psql <your-database-url> -f server/db/schema.sql
 psql <your-database-url> -f server/db/seed.sql
 ```
 This creates the `quests` and `quest_history` tables and inserts 50 preset
-quests spread across five rarity tiers.
+quests spread across five rarity tiers. If you're updating an existing
+database rather than starting fresh, also run
+`server/db/migration-add-is-active.sql`.
 
 ## 3. How to run it
 
-**Start the API:**
+**Local development (no Cloudflare involved):**
+
+Start the API:
 ```bash
 node server/server.js
 ```
-You should see:
-```
-Bordemmaxing API running on port 4000 (development)
-```
+You should see `Bordemmaxing API running on port 4000 (development)`.
 
-**Start the client** (in a separate terminal):
+Start the client, in a separate terminal:
 ```bash
 cd client
 npm run dev
 ```
 Open the address Vite prints (typically `http://localhost:5173`).
 
-**Quick check the backend is alive and can reach the database:**
+Quick checks:
 ```bash
-curl http://localhost:4000/healthz
+curl http://localhost:4000/healthz     # {"status":"ok"}
+curl http://localhost:4000/api/quests  # a list of quests
 ```
-should return `{"status":"ok"}`.
 
+**Production (how the live site actually runs):**
+
+The real deployment is three separate pieces:
+
+1. **Database:** Neon, already live, nothing to run.
+2. **API:** Express, deployed to Render. In production it requires every
+   request to carry a matching `X-Proxy-Secret` header, or it returns
+   `403 Forbidden` — this is what stops anyone from reaching it directly and
+   skipping the login gate.
+3. **Client + gate:** a Cloudflare Worker that serves the built React app
+   and forwards `/api/*` and `/healthz` to Render, attaching the secret
+   header itself. Cloudflare Access sits in front of the whole Worker, so
+   the secret header is never visible to a browser — only the Worker holds it.
+
+To rebuild and redeploy the Worker after a client change:
 ```bash
-curl http://localhost:4000/api/quests
+cd client
+npm run build          # VITE_API_BASE_URL must be empty for this build
+cd ../worker
+npx wrangler deploy
 ```
-should return JSON — a list of quests.
+An empty `VITE_API_BASE_URL` makes the client call relative paths like
+`/api/quests`, which resolve against whatever origin loaded the page — the
+Worker, in production.
 
 ## 4. Features and usage
 
-- **Spin for a quest** — draw a random quest from a spinning color wheel.
+- **Spin for a quest** — a spinning color wheel draws a random quest.
   Presets are weighted by rarity (common quests are far more likely than
-  legendary ones); if you've added your own quests, there's a separate
-  chance to draw one of those instead. The wheel spins continuously while
-  waiting on the server, then decelerates and lands on the drawn rarity's
-  color.
-- **Add a quest** — add your own custom quest to the pool, or click
-  **Generate & add with AI** to have Gemini suggest one and add it
-  automatically (shown in a closeable popup). User-added quests always get
-  a `unique` rarity, separate from the preset tiers.
-- **Hide a quest** — temporarily remove one of your own quests from the
-  spin pool without deleting it, using the "Hide from spins" toggle.
-  Deleting is separate and permanent.
+  legendary ones); user-added quests have their own separate pull chance.
+  The wheel spins continuously while waiting on the server (which also
+  covers Render's free-tier cold-start delay gracefully), then decelerates
+  and lands on the drawn rarity's color.
+- **Add a quest** — add your own custom quest, or click **Generate & add
+  with AI** to have Gemini suggest one automatically. User-added quests
+  always get a `unique` rarity.
+- **Hide a quest** — a non-destructive toggle that removes one of your own
+  quests from the spin pool without deleting it. The category line
+  collapses smoothly; the quest itself, its badge, and both action buttons
+  stay fully visible and usable.
 - **Complete a quest** — mark a drawn quest as done. Each completion is
   logged, so the same quest can be completed more than once over time.
-- **View history** — see a log of everything you've completed and when, or
-  reset the whole log (and every quest's completion state) with the "Reset
-  history" button.
+- **View history** — see everything you've completed and when, or reset the
+  whole log (and every quest's completion state) with the "Reset history"
+  button.
 
-**Main API endpoints:**
+**Main API endpoints** (all require the proxy secret in production, added
+automatically by the Worker):
 
 | Method | Path | What it does |
 |---|---|---|
 | `GET` | `/healthz` | Health check — confirms the API is up and can reach the database |
 | `GET` | `/api/quests` | List quests (presets plus all user-added quests) |
 | `GET` | `/api/quests/spin` | Draw one random quest (rarity-weighted) |
-| `POST` | `/api/quests/generate` | Ask Gemini for a quest suggestion (does not save it) |
+| `POST` | `/api/quests/generate` | Ask Gemini for a quest suggestion (does not save it; rate-limited to 5/min per IP) |
 | `POST` | `/api/quests` | Add a new quest (`{ text, category }`) |
 | `PATCH` | `/api/quests/:id/toggle-active` | Hide/unhide a user-added quest from the spin pool |
 | `PATCH` | `/api/quests/:id/complete` | Mark a quest as completed |
@@ -160,17 +179,20 @@ Bordemmaxing/
 │       └── main.jsx
 ├── server/
 │   ├── db/
-│   │   ├── pool.js         # Postgres connection pool
-│   │   ├── schema.sql      # Table definitions
-│   │   ├── seed.sql        # 50 preset quests
-│   │   └── migration-add-is-active.sql  # adds the hide/unhide column to an existing DB
-│   ├── questsRepo.js       # Data-access layer + weighted spin logic
+│   │   ├── pool.js
+│   │   ├── schema.sql
+│   │   ├── seed.sql
+│   │   └── migration-add-is-active.sql
+│   ├── questsrepo.js       # Data-access layer + weighted spin logic
 │   ├── aiService.js        # Server-side Gemini API call
-│   ├── server.js           # Express app and routes
+│   ├── server.js           # Express app, routes, proxy-secret gate, rate limiting
 │   └── .env.example
+├── worker/                 # Cloudflare Worker: serves the client, proxies to Render
+│   ├── src/index.js
+│   └── wrangler.jsonc
 ├── docs/                   # Course-required planning/design docs
 ├── journal/                # Weekly learning log entries
-├── REPORT.md                # Weekly increment reports
+├── REPORT.md
 ├── AI-USAGE.md
 └── README.md
 ```
@@ -183,61 +205,57 @@ historyScreen<img width="834" height="752" alt="image" src="https://github.com/u
 
 ## Demo mode
 
-This repository can run two ways, chosen by one environment variable at
-**build** time.
+This client can still run two ways, chosen by one environment variable at
+**build** time:
 
 | `VITE_USE_MOCK_API` | What happens |
 | --- | --- |
-| unset, or `true` | The client answers its own requests from `localStorage`. No server, no database, nothing shared between visitors. |
-| `false` | The client calls the real Express API, which reads and writes real PostgreSQL. **This is what the live GitHub Pages site currently runs.** |
+| unset, or `true` | The client answers its own requests from `localStorage`. No server, no database, no login. |
+| `false` | The client calls the real Express API. **This only works from a build that also has the proxy secret available — in practice, only the Cloudflare Worker build.** |
 
-| Piece | Status |
-| --- | --- |
-| **Client** | Deployed to GitHub Pages, connected to the real API |
-| **API** | Deployed to Render, live |
-| **Database** | Live, hosted on [Neon](https://neon.tech) |
+GitHub Pages, if it's still published, runs in demo mode only. It has no way
+to supply the Worker's secret header, so it cannot reach the real API — the
+Worker link above is the actual live app.
 
 ## 7. Known issues and next steps
 
 **Known issues:**
-- No authentication — user identity is a lightweight per-browser id, not
-  real login. User-added quests, history, and hide/delete actions are
-  intentionally global rather than per-user, since there are no real
-  accounts to scope them to.
-- The site is public but not yet behind any access control. **Cloudflare
-  Zero Trust (email one-time-PIN gate) is planned for the start of week 3**
-  to restrict access before staying public longer, per professor feedback.
-- No rate limiting on `/api/quests/generate` — it calls a metered external
-  API with no throttling yet, which is a real cost risk.
-- A temporary `/debug/cors` diagnostic route is still present in
-  `server.js` from deployment troubleshooting and needs removing.
+- No traditional user accounts — identity is a lightweight per-browser id;
+  quests, history, and hide/delete actions are intentionally global rather
+  than per-user, since there's nothing to scope them to. Cloudflare Access
+  controls *who can reach the app at all*, which is a separate layer from
+  per-user data ownership.
+- `RarityBadge` is still copy-pasted as inline JSX across three components
+  instead of being one shared component.
+- No server-side maximum-length validation on quest text — only the
+  client's input `maxLength`, which a direct API call could bypass (the
+  proxy-secret gate limits who can make that call at all, but doesn't
+  replace input validation).
+- The database connects as Neon's default owner role rather than a
+  permission-scoped one.
 - A couple of seeded preset quests have minor text/spacing typos from an
-  earlier copy-paste; not yet cleaned up.
-- `RarityBadge` is currently copy-pasted as inline JSX across three
-  components instead of being one shared component.
+  earlier copy-paste.
 
 **Next steps:**
-- Set up Cloudflare Zero Trust in front of the deployed app.
-- Rotate the database and Gemini credentials (both were briefly exposed
-  during debugging).
-- Add rate limiting to the AI-generation endpoint.
-- Remove the temporary debug route.
+- Extract `RarityBadge` into a real shared component.
+- Add server-side length validation on quest text.
 - Clean up the typo'd seed entries and reconsider the tone of a couple of
   the "legendary" tier quests.
-- Extract `RarityBadge` into a real shared component.
 
 ## Architecture
 
-The React client (Vite, deployed to GitHub Pages) talks to an Express API
-(deployed to Render) over HTTPS, which is the only thing that talks to
-PostgreSQL directly. The database is hosted on Neon. The client can also run
-against a simulated in-browser backend for demo purposes, chosen by one
-build-time environment variable, so the interface can be shown even if the
-real API is ever asleep or unreachable.
+The React client and the Cloudflare Access gate are the same Worker:
+Cloudflare Access checks the visitor's email before anything else loads, and
+once past it, the Worker serves the built client and forwards `/api/*` and
+`/healthz` to the Express API on Render, attaching a shared secret header.
+Render independently rejects any request without that exact header, so the
+gate can't be bypassed by finding the raw Render URL. Render is the only
+thing that talks to PostgreSQL, hosted on Neon. GitHub Pages, if published,
+serves a separate, ungated build restricted to demo mode only.
 
 ## Author
 
-Pagcu, Carl Gaebriel J. (Gpagcu) , HAU-6APSI.
+Pagcu, Carl Gaebriel J. (@Gpagcu), HAU-6APSI.
 
 ## Licence
 
