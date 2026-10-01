@@ -2,7 +2,7 @@
 
 **Figma:** https://www.figma.com/design/RiY0gnSTqWExZWoyn5wQcA/Bordemmaxing?node-id=0-1
 
-**Org Github Project repo** https://github.com/HAU-6APSI/student-6apsi-2209-Gpagcu/blob/d5a80981584f8aca4f1445abf251c09a716cc752/project/2.%20Wireframes%20%26%20Component%20Breakdown
+**Org Github Project repo of wireframe and components** https://github.com/HAU-6APSI/student-6apsi-2209-Gpagcu/blob/d5a80981584f8aca4f1445abf251c09a716cc752/project/2.%20Wireframes%20%26%20Component%20Breakdown
 
 ## Spin
 
