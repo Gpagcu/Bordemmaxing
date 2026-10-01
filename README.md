@@ -191,17 +191,19 @@ Bordemmaxing/
 │   ├── src/index.js
 │   └── wrangler.jsonc
 ├── docs/                   # Course-required planning/design docs
-├── journal/                # Weekly learning log entries
 ├── REPORT.md
 ├── AI-USAGE.md
 └── README.md
 ```
 
-## 6. Screenshots
+## 6. Screenshots and Demo Video
 
 spinScreen<img width="712" height="565" alt="image" src="https://github.com/user-attachments/assets/be964d1a-9004-43dd-8370-e50551b083aa" />
 addQuestScreen<img width="748" height="546" alt="image" src="https://github.com/user-attachments/assets/26e93f8b-965c-4e76-9c3f-7a2dc4e96b11" />
 historyScreen<img width="834" height="752" alt="image" src="https://github.com/user-attachments/assets/c6516fd1-233c-4907-8212-1dfe52ee9e78" />
+
+## Video Link
+  **Link:**
 
 ## Demo mode
 
