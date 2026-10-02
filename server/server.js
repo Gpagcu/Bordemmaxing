@@ -1,4 +1,3 @@
-// server/server.js
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -83,11 +82,6 @@ app.use('/api', apiLimiter);
 const PORT = process.env.PORT || 4000;
 const isProd = process.env.NODE_ENV === 'production';
 
-// For this course project, a simple query-param or header user id is enough —
-// no full auth system needed. Swap for real auth later if you want.
-// getUserId still tags who added a quest or completed one, purely as a
-// record — it no longer restricts what anyone can see or spin, since this
-// project has no real accounts.
 function getUserId(req) {
   return req.query.userId || req.headers['x-user-id'] || 'demo-user';
 }

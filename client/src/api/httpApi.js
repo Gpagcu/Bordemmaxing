@@ -1,8 +1,3 @@
-// The real client. Every function here talks to YOUR Express API.
-//
-// This is the file that matters for your finals project. mockApi.js exists so
-// you can build the interface before this has anywhere to point.
-
 import { getClientId } from './clientId.js'
 
 const BASE = import.meta.env.VITE_API_BASE_URL || ''

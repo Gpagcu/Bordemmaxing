@@ -1,10 +1,3 @@
-// server/aiService.js
-//
-// Calls Google's Gemini API to suggest a side quest. This lives on the
-// server, not the client, specifically so the API key never ships to the
-// browser — a client-side call would expose it to anyone who opens
-// DevTools.
-
 const GEMINI_MODEL = 'gemini-3.8-flash';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 

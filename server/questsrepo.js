@@ -1,4 +1,3 @@
-// server/questsRepo.js
 import pool from './db/pool.js';
 
 // Pull weights among preset rarities (must sum to something reasonable; ratios matter, not the total).
@@ -10,13 +9,7 @@ const RARITY_WEIGHTS = {
   legendary: 3,
 };
 
-// Chance that a spin pulls from the pool of user-added ("unique") quests
-// instead of the rarity-weighted preset pool. This project has no real
-// accounts — user_id is just a per-browser id — so the unique pool is
-// shared globally rather than scoped to whoever happens to be spinning.
-// Scoping it per-browser caused a confusing bug during testing: quests
-// added in one browser session were invisible (and undrawable) in another,
-// making the pool look far smaller than it actually was.
+
 const UNIQUE_PULL_CHANCE = 0.15;
 
 function pickWeightedRarity(availableRarities) {
