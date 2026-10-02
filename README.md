@@ -203,7 +203,7 @@ addQuestScreen<img width="748" height="546" alt="image" src="https://github.com/
 historyScreen<img width="834" height="752" alt="image" src="https://github.com/user-attachments/assets/c6516fd1-233c-4907-8212-1dfe52ee9e78" />
 
 ## Video Link
-  **Link:**
+  **Link:** https://drive.google.com/drive/folders/18FoSPKT7ba4EG2APlqioqsb4gA5Ziv3-?usp=drive_link
 
 ## Demo mode
 
@@ -266,4 +266,4 @@ MIT, see [LICENSE](LICENSE).
 ---
 
 Parts of this project's setup, debugging, and documentation were assisted by
-AI (Claude). See `AI-USAGE.md` for details.
+AI (Claude). See [AI-USAGE.md] for details.

@@ -1,5 +1,6 @@
 // server/server.js
 import express from 'express';
+import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -30,6 +31,7 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .map((o) => o.trim())
   .filter(Boolean);
 
+app.use(helmet());
 app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : true }));
 app.use(express.json());
 
@@ -153,6 +155,14 @@ app.post('/api/quests', async (req, res) => {
     const { text, category } = req.body;
     if (!text || !text.trim()) {
       return res.status(400).json({ error: 'Quest text is required' });
+    }
+    // Server-side, matching the client's own input limits — a direct API
+    // call bypasses the client entirely, so this can't live only there.
+    if (text.length > 200) {
+      return res.status(400).json({ error: 'Quest text must be 200 characters or fewer' });
+    }
+    if (category && category.length > 40) {
+      return res.status(400).json({ error: 'Category must be 40 characters or fewer' });
     }
     const quest = await addUserQuest({ text, category, userId: getUserId(req) });
     res.status(201).json(quest);

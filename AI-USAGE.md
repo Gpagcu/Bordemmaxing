@@ -3,11 +3,6 @@
 This project was built with AI assistance (Claude, Anthropic). This file is
 the record of it.
 
-**Note on commit links below:** each entry needs the real commit SHA from
-this repo's history. Find it with `git log --oneline` and match the commit
-message to the change described, then replace `<SHA>` in the URL. I've left
-these as placeholders rather than guessing, since inventing a commit link
-would defeat the point of this file being evidence.
 
 ## 1. How I used AI
 
