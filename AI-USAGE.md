@@ -140,24 +140,18 @@ the record of it.
   already documented in the README.
 * **Commit:** https://github.com/Gpagcu/Bordemmaxing/commit/f9c02c6e77c5dfebdf703b8d1b1b94845bcd9658
 
-## 3. Who wrote what
+## Who wrote what
 
-*the inital history screen was build by me, this screen simple records all completed quest that have been done*
+## Written by me
+**File:** server/db/seed.sql
+**Commit:** https://github.com/Gpagcu/Bordemmaxing/commit/42f9a70267d1cf69134cf882afb6791da8cd856e
+**What it does and why it is built this way**: the two "legendary" tier quest entries ("Text your ex I miss you" and "Stop being so shy come on confess to your crush") are my own text, typed by me, not generated. Everything else in this file — the schema shape, the rarity distribution across the other 48 quests, the SQL structure — was written by Claude.
 
-*the first version of the spinscreen where the animation was a simple sphere that has a shake animation this then was later change to add more visuals *
+## The AI-written part I understand best
+**File:** client/src/components/SpinScreen.jsx
+**Commit:** https://github.com/Gpagcu/Bordemmaxing/commit/bdcdfd24552d5fbe9cff1d301907a0503a91933b
+**What it does and why we kept it:** draws a random quest and shows it with a spinning color wheel — the wheel spins continuously while waiting on the server, then decelerates and lands on the drawn rarity's color under a fixed pointer. I understand the mechanism well enough to explain it: the rotation angle for each rarity is precomputed from a fixed SEGMENT_ANGLES map, and the final rotation always adds on top of the current rotation rather than resetting to zero, so the wheel never snaps backward between spins. I didn't write this logic myself, but I can explain why it works, which is different from being able to run it.
 
-*the addQeustScreen this was build to add unique quest that are of another rarity and to increase the amount of quest apart from the original 50 quest *
+**A note on the rest of this project**
 
-*the css design was adjusted meticulously to better fit the visual apperance of the project*
-
-### Written by me
-
-* File: AddQuestScreen.jsx, aiService.js
-* Commit: Generate-with-AI now creates the quest directly
-* What it does and why it is built this way: this was a simple change of incorpurating the generate random quest via a GEMINI AI API for completely random quest.
-
-### The AI-written part I understand best
-
-* File:spinScreen.jsx
-* Commit: Tweaked the spin animation to be spin-a-wheel
-* What it does and why we kept it:originally this was only a simple sphere with a shake animation now it is changed to an actual spin-the-wheel with proper spin-the-wheel animations.
+Being direct about this, since the point of this file is honesty, not a good-looking document: the large majority of this project's code was written by Claude based on what I asked for, not typed by me. My own contribution was mostly in testing, diagnosing problems from real error messages, making judgment calls (switching to Neon over fighting Docker, deciding what to deploy where, choosing the access-control design), and the quest content above. If the course requires at least a fifth of the project to be code I wrote myself, I don't think this project currently meets that on its own, and I'm flagging that honestly here rather than overstating what "Written by me" above actually represents.
