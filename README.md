@@ -1,5 +1,7 @@
 # Bordemmaxing
 
+[![Made with AI](https://img.shields.io/badge/Made_with-AI_assistance-blue)](AI-USAGE.md)
+
 **Repository:** https://github.com/Gpagcu/Bordemmaxing
 **Live site:** https://bordemmaxing.spinproject.workers.dev
 **Access:** Gated by Cloudflare Access (email One-Time PIN). Enter an
