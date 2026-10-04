@@ -154,4 +154,15 @@ the record of it.
 
 **A note on the rest of this project**
 
-Being direct about this, since the point of this file is honesty, not a good-looking document: the large majority of this project's code was written by Claude based on what I asked for, not typed by me. My own contribution was mostly in testing, diagnosing problems from real error messages, making judgment calls (switching to Neon over fighting Docker, deciding what to deploy where, choosing the access-control design), and the quest content above. If the course requires at least a fifth of the project to be code I wrote myself, I don't think this project currently meets that on its own, and I'm flagging that honestly here rather than overstating what "Written by me" above actually represents.
+Being direct about this, since the point of this file is honesty: I used
+Claude as a stepping stone to build this project efficiently and
+effectively, directing it toward the schema, routes, screens, and features
+I wanted rather than typing the implementation line by line myself. My own
+contribution was in the direction itself — testing each piece, diagnosing
+real problems from actual error messages, and making the judgment calls
+that shaped the project (switching to Neon over fighting Docker, deciding
+what to deploy where and how to gate access to it, and the quest content
+above). The large majority of the code in this repository was written by
+Claude based on that direction, not typed by me — I'm naming that plainly
+here rather than overstating what "Written by me" above actually
+represents.
