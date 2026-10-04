@@ -237,8 +237,7 @@ Worker link above is the actual live app.
   replace input validation).
 - The database connects as Neon's default owner role rather than a
   permission-scoped one.
-- A couple of seeded preset quests have minor text/spacing typos from an
-  earlier copy-paste.
+- The "Generate & add with AI" button can occasionally fail with a 503 error. This comes from Gemini's own free-tier API ("the model is currently experiencing high demand"), not a bug in this app — it's Google's servers being temporarily overloaded, and it resolves itself on retry within a minute or so. Worth knowing if you hit it rather than assuming something's broken.
 
 **Next steps:**
 - Extract `RarityBadge` into a real shared component.

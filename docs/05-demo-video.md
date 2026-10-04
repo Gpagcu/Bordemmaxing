@@ -20,4 +20,3 @@ Opened server.js and explained the proxy-secret check — Render rejects any req
 **Challenges and what's next**
 The CORS debugging between GitHub Pages and Render, specifically discovering auto-deploy had silently never triggered before finding the real cause. What I'd do differently: set up Cloudflare Access in week one instead of the final week, since retrofitting it meant redoing CORS and the deploy pipeline from scratch.
 
-
