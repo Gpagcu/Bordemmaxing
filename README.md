@@ -224,11 +224,13 @@ Worker link above is the actual live app.
 ## 7. Known issues and next steps
 
 **Known issues:**
-- No traditional user accounts — identity is a lightweight per-browser id;
+- *No traditional user accounts* — identity is a lightweight per-browser id;
   quests, history, and hide/delete actions are intentionally global rather
   than per-user, since there's nothing to scope them to. Cloudflare Access
   controls *who can reach the app at all*, which is a separate layer from
   per-user data ownership.
+- *Only approved emails can open the live site.* This is by design, not a free-plan limitation — the Cloudflare Access    policy's Include rule lists specific allowed emails, which is the actual access-control mechanism. Anyone not on that list, or anyone without an email at all, gets stopped at the login screen before the app ever loads. If you need access and aren't on the list, ask to be added.
+- The *free Cloudflare plan* does have one real limit worth naming: Zero Trust Access caps out at 50 users total, which is irrelevant at this project's scale but worth being upfront about.
 - `RarityBadge` is still copy-pasted as inline JSX across three components
   instead of being one shared component.
 - No server-side maximum-length validation on quest text — only the
@@ -237,7 +239,7 @@ Worker link above is the actual live app.
   replace input validation).
 - The database connects as Neon's default owner role rather than a
   permission-scoped one.
-- The "Generate & add with AI" button can occasionally fail with a 503 error. This comes from Gemini's own free-tier API ("the model is currently experiencing high demand"), not a bug in this app — it's Google's servers being temporarily overloaded, and it resolves itself on retry within a minute or so. Worth knowing if you hit it rather than assuming something's broken.
+- The *Generate & add with AI* button can occasionally fail with a 503 error. This comes from Gemini's own free-tier API ("the model is currently experiencing high demand"), not a bug in this app — it's Google's servers being temporarily overloaded, and it resolves itself on retry within a minute or so. Worth knowing if you hit it rather than assuming something's broken.
 
 **Next steps:**
 - Extract `RarityBadge` into a real shared component.
